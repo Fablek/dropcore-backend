@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropcoreApi", "DropcoreApi\DropcoreApi.csproj", "{6664765D-95CC-4DA1-B9AA-9219CC82A2F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropcoreApi.Core", "DropcoreApi.Core\DropcoreApi.Core.csproj", "{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6664765D-95CC-4DA1-B9AA-9219CC82A2F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6664765D-95CC-4DA1-B9AA-9219CC82A2F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6664765D-95CC-4DA1-B9AA-9219CC82A2F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6664765D-95CC-4DA1-B9AA-9219CC82A2F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EE261ABD-7629-46C0-895D-249B055A6512}
+	EndGlobalSection
+EndGlobal
