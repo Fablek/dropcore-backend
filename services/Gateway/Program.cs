@@ -5,11 +5,39 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Controllers
-builder.Services.AddControllers();
+// Load JWT config
+var jwtConfig = builder.Configuration.GetSection("Jwt");
 
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
+// Add services
+builder.Services.AddControllers();
+builder.Services.AddHttpClient();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // frontend
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtConfig["Issuer"],
+            ValidAudience = jwtConfig["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtConfig["Key"] ?? "supersecretkeymustbeatleast32chars"))
+        };
+    });
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Gateway", Version = "v1" });
@@ -33,24 +61,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT auth
-var jwtConfig = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtConfig["Issuer"],
-            ValidAudience = jwtConfig["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtConfig["Key"] ?? "defaultkey"))
-        };
-    });
-
 var app = builder.Build();
 
 // Middleware
@@ -60,7 +70,7 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gateway V1");
 });
 
-app.UseRouting();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
