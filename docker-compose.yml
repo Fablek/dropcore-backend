@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dropcore
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  auth-service:
+    build:
+      context: ./services/AuthService
+    ports:
+      - "5001:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=dropcore
+    depends_on:
+      - postgres
+
+  gateway:
+    build:
+      context: ./services/Gateway
+    ports:
+      - "8000:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+
+  auth-tools:
+    build:
+      context: ./services/AuthService
+      dockerfile: Dockerfile.tools
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=dropcore
+    command: ["--help"]
+
+volumes:
+  pgdata:
