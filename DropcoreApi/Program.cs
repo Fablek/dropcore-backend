@@ -1,4 +1,5 @@
 using DropcoreApi.Core.Auth;
+using DropcoreApi.Core.Shared;
 using DropcoreApi.Core.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropcoreApi", "DropcoreApi\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropcoreApi.Core", "DropcoreApi.Core\DropcoreApi.Core.csproj", "{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropcoreApi.FilesService", "DropcoreApi.FilesService\DropcoreApi.FilesService.csproj", "{EA96E868-392D-41C4-A79F-068AF18B4725}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4544AC53-56C9-4DCD-84DB-06A12C45EF7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA96E868-392D-41C4-A79F-068AF18B4725}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA96E868-392D-41C4-A79F-068AF18B4725}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA96E868-392D-41C4-A79F-068AF18B4725}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA96E868-392D-41C4-A79F-068AF18B4725}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
