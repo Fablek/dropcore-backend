@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -21,6 +21,8 @@ services:
       - "8080:80"
     depends_on:
       - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
   auth-service:
     build:
@@ -33,22 +35,6 @@ services:
     depends_on:
       - postgres
 
-  gateway:
-    build:
-      context: ./services/Gateway
-    ports:
-      - "8000:5000"
-    environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:5000
-
-  file-service:
-    build:
-      context: ./services/FileService
-    ports:
-      - "5002:5000"
-    environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:5000
-
   auth-tools:
     build:
       context: ./services/AuthService
@@ -60,5 +46,49 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=dropcore
     command: ["--help"]
 
+  gateway:
+    build:
+      context: ./services/Gateway
+    ports:
+      - "8000:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+
+  file-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fileservice
+    ports:
+      - "5433:5432"
+    volumes:
+      - file_pgdata:/var/lib/postgresql/data
+
+  file-service:
+    build:
+      context: ./services/FileService
+    ports:
+      - "5002:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - ConnectionStrings__DefaultConnection=Host=file-postgres;Port=5432;Username=postgres;Password=postgres;Database=fileservice
+    depends_on:
+      - file-postgres
+
+  file-tools:
+    build:
+      context: ./services/FileService
+      dockerfile: Dockerfile.tools
+    working_dir: /src
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=fileservice
+    command: ["--help"]
+
 volumes:
   pgdata:
+  pgadmin_data:
+  file_pgdata:

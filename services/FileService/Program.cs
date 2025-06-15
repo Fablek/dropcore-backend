@@ -1,20 +1,31 @@
+using FileService.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS
+// Add services
+
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(); // Jeœli planujesz u¿ywaæ JSON z atrybutami Newtonsoft
+
+builder.Services.AddDbContext<FileDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseNpgsql(connectionString);
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
-// Controllers
-builder.Services.AddControllers();
-
-// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -24,11 +35,15 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Middleware
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FileService V1");
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "FileService V1");
+    });
+}
 
 app.UseCors();
 
