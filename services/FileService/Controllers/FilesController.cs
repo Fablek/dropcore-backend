@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FileService.DTOs;
+using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 
 namespace FileService.Controllers;
 
@@ -6,51 +8,57 @@ namespace FileService.Controllers;
 [Route("files")]
 public class FilesController : ControllerBase
 {
+    private readonly HttpClient _httpClient;
     private readonly string storagePath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
 
-    public FilesController()
+    public FilesController([FromServices] IHttpClientFactory httpClientFactory)
     {
+        _httpClient = httpClientFactory.CreateClient();
+
         if (!Directory.Exists(storagePath))
             Directory.CreateDirectory(storagePath);
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload(IFormFile file)
+    public async Task<IActionResult> Upload([FromForm] FileUploadDto dto)
     {
+        var file = dto.File;
+
         if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded");
+            return BadRequest("Invalid file.");
 
-        var filePath = Path.Combine(storagePath, file.FileName);
+        using var content = new MultipartFormDataContent();
+        using var stream = file.OpenReadStream();
+        content.Add(new StreamContent(stream), "file", file.FileName);
 
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
+        var response = await _httpClient.PostAsync("http://storage-node:5000/store", content);
 
-        return Ok(new { message = "File uploaded", file = file.FileName });
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
+
+        return Ok(await response.Content.ReadAsStringAsync());
     }
 
     [HttpGet("{fileName}")]
-    public IActionResult Download(string fileName)
+    public async Task<IActionResult> Download(string fileName)
     {
-        var filePath = Path.Combine(storagePath, fileName);
+        var response = await _httpClient.GetAsync($"http://storage-node:5000/store/{fileName}");
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode);
 
-        if (!System.IO.File.Exists(filePath))
-            return NotFound();
+        var stream = await response.Content.ReadAsStreamAsync();
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
 
-        var fileBytes = System.IO.File.ReadAllBytes(filePath);
-        return File(fileBytes, "application/octet-stream", fileName);
+        return File(stream, contentType, fileName);
     }
 
     [HttpDelete("{fileName}")]
-    public IActionResult Delete(string fileName)
+    public async Task<IActionResult> Delete(string fileName)
     {
-        var filePath = Path.Combine(storagePath, fileName);
+        var response = await _httpClient.DeleteAsync($"http://storage-node:5000/store/{fileName}");
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
-        if (!System.IO.File.Exists(filePath))
-            return NotFound();
-
-        System.IO.File.Delete(filePath);
-        return Ok(new { message = "File deleted" });
+        return Ok(await response.Content.ReadAsStringAsync());
     }
 }
