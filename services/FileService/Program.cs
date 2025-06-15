@@ -30,7 +30,7 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "FileService V1");
 });
 
-app.UseCors(); // jeœli w³¹czysz CORS
+app.UseCors();
 
 app.UseAuthorization();
 
