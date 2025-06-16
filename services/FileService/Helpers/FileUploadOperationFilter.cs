@@ -1,14 +1,15 @@
 ﻿using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Http;
 
 public class FileUploadOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        var hasFile = context.ApiDescription.ParameterDescriptions
-            .Any(p => p.Type == typeof(IFormFile));
+        var hasFormFile = context.ApiDescription.ParameterDescriptions
+            .Any(p => typeof(IFormFile).IsAssignableFrom(p.Type));
 
-        if (!hasFile) return;
+        if (!hasFormFile) return;
 
         operation.RequestBody = new OpenApiRequestBody
         {

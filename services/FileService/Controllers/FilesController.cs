@@ -1,5 +1,8 @@
-﻿using FileService.DTOs;
+﻿using FileService.Data;
+using FileService.DTOs;
+using FileService.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 
 namespace FileService.Controllers;
@@ -20,7 +23,7 @@ public class FilesController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] FileUploadDto dto)
+    public async Task<IActionResult> Upload([FromForm] FileUploadDto dto, [FromServices] FileDbContext db)
     {
         var file = dto.File;
 
@@ -36,12 +39,26 @@ public class FilesController : ControllerBase
         if (!response.IsSuccessStatusCode)
             return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
+        var metadata = new FileMetadata
+        {
+            FileName = file.FileName,
+            ContentType = file.ContentType ?? "application/octet-stream",
+            OwnerId = "test-owner" // 🛠️ TODO: później JWT/claims
+        };
+
+        db.Files.Add(metadata);
+        await db.SaveChangesAsync();
+
         return Ok(await response.Content.ReadAsStringAsync());
     }
 
     [HttpGet("{fileName}")]
-    public async Task<IActionResult> Download(string fileName)
+    public async Task<IActionResult> Download(string fileName, [FromServices] FileDbContext db)
     {
+        var exists = await db.Files.AnyAsync(f => f.FileName == fileName);
+        if (!exists)
+            return NotFound("Metadata not found for this file.");
+
         var response = await _httpClient.GetAsync($"http://storage-node:5000/store/{fileName}");
         if (!response.IsSuccessStatusCode)
             return StatusCode((int)response.StatusCode);
@@ -53,12 +70,27 @@ public class FilesController : ControllerBase
     }
 
     [HttpDelete("{fileName}")]
-    public async Task<IActionResult> Delete(string fileName)
+    public async Task<IActionResult> Delete(string fileName, [FromServices] FileDbContext db)
     {
         var response = await _httpClient.DeleteAsync($"http://storage-node:5000/store/{fileName}");
+
         if (!response.IsSuccessStatusCode)
             return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
+        var entity = await db.Files.FirstOrDefaultAsync(f => f.FileName == fileName);
+        if (entity != null)
+        {
+            db.Files.Remove(entity);
+            await db.SaveChangesAsync();
+        }
+
         return Ok(await response.Content.ReadAsStringAsync());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> List([FromServices] FileDbContext db)
+    {
+        var files = await db.Files.ToListAsync();
+        return Ok(files);
     }
 }

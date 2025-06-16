@@ -31,7 +31,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FileService", Version = "v1" });
-
     c.OperationFilter<FileUploadOperationFilter>();
 });
 
