@@ -24,11 +24,9 @@ namespace FileService.Migrations
 
             modelBuilder.Entity("FileService.Models.FileMetadata", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ContentType")
                         .IsRequired()
@@ -39,6 +37,10 @@ namespace FileService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StorageFileName")
                         .IsRequired()
                         .HasColumnType("text");
 

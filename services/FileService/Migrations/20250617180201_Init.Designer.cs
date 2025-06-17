@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FileService.Migrations
 {
     [DbContext(typeof(FileDbContext))]
-    [Migration("20250615171851_InitFiles")]
-    partial class InitFiles
+    [Migration("20250617180201_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,11 +27,9 @@ namespace FileService.Migrations
 
             modelBuilder.Entity("FileService.Models.FileMetadata", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ContentType")
                         .IsRequired()
@@ -42,6 +40,10 @@ namespace FileService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StorageFileName")
                         .IsRequired()
                         .HasColumnType("text");
 

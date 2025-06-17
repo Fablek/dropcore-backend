@@ -33,9 +33,11 @@ public class FilesController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest("Invalid file.");
 
+        var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
+
         using var content = new MultipartFormDataContent();
         using var stream = file.OpenReadStream();
-        content.Add(new StreamContent(stream), "file", file.FileName);
+        content.Add(new StreamContent(stream), "file", uniqueFileName);
 
         var response = await _httpClient.PostAsync("http://storage-node:5000/store", content);
 
@@ -45,6 +47,7 @@ public class FilesController : ControllerBase
         var metadata = new FileMetadata
         {
             FileName = file.FileName,
+            StorageFileName = uniqueFileName,
             ContentType = file.ContentType ?? "application/octet-stream",
             OwnerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown"
         };
@@ -52,46 +55,50 @@ public class FilesController : ControllerBase
         db.Files.Add(metadata);
         await db.SaveChangesAsync();
 
-        return Ok(await response.Content.ReadAsStringAsync());
+        return Ok(metadata);
     }
 
-    [HttpGet("{fileName}")]
-    public async Task<IActionResult> Download(string fileName, [FromServices] FileDbContext db)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> Download(Guid id, [FromServices] FileDbContext db)
     {
-        var exists = await db.Files.AnyAsync(f => f.FileName == fileName);
-        if (!exists)
-            return NotFound("Metadata not found for this file.");
+        var file = await db.Files.FindAsync(id);
+        if (file == null)
+            return NotFound("File not found.");
 
-        var response = await _httpClient.GetAsync($"http://storage-node:5000/store/{fileName}");
+        var response = await _httpClient.GetAsync($"http://storage-node:5000/store/{file.StorageFileName}");
         if (!response.IsSuccessStatusCode)
             return StatusCode((int)response.StatusCode);
 
         var stream = await response.Content.ReadAsStreamAsync();
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
 
-        return File(stream, contentType, fileName);
+        return File(stream, contentType, file.FileName);
     }
 
-    [HttpDelete("{fileName}")]
-    public async Task<IActionResult> Delete(string fileName, [FromServices] FileDbContext db)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, [FromServices] FileDbContext db)
     {
         var ownerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var entity = await db.Files.FindAsync(id);
 
-        var entity = await db.Files.FirstOrDefaultAsync(f => f.FileName == fileName);
         if (entity == null)
-            return NotFound("File not found.");
+            return NotFound("File not found in database.");
 
         if (entity.OwnerId != ownerId)
             return Forbid("You do not have permission to delete this file.");
 
-        var response = await _httpClient.DeleteAsync($"http://storage-node:5000/store/{fileName}");
-        if (!response.IsSuccessStatusCode)
+        var response = await _httpClient.DeleteAsync($"http://storage-node:5000/store/{entity.StorageFileName}");
+
+        if (response.StatusCode != System.Net.HttpStatusCode.NoContent &&
+            response.StatusCode != System.Net.HttpStatusCode.NotFound)
+        {
             return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
+        }
 
         db.Files.Remove(entity);
         await db.SaveChangesAsync();
 
-        return Ok(await response.Content.ReadAsStringAsync());
+        return Ok("File metadata deleted.");
     }
 
     [HttpGet]
