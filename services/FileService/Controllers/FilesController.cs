@@ -1,14 +1,17 @@
 ﻿using FileService.Data;
 using FileService.DTOs;
 using FileService.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
+using System.Security.Claims;
 
 namespace FileService.Controllers;
 
 [ApiController]
 [Route("files")]
+[Authorize]
 public class FilesController : ControllerBase
 {
     private readonly HttpClient _httpClient;
@@ -43,7 +46,7 @@ public class FilesController : ControllerBase
         {
             FileName = file.FileName,
             ContentType = file.ContentType ?? "application/octet-stream",
-            OwnerId = "test-owner" // 🛠️ TODO: później JWT/claims
+            OwnerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown"
         };
 
         db.Files.Add(metadata);
@@ -72,17 +75,21 @@ public class FilesController : ControllerBase
     [HttpDelete("{fileName}")]
     public async Task<IActionResult> Delete(string fileName, [FromServices] FileDbContext db)
     {
-        var response = await _httpClient.DeleteAsync($"http://storage-node:5000/store/{fileName}");
+        var ownerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        var entity = await db.Files.FirstOrDefaultAsync(f => f.FileName == fileName);
+        if (entity == null)
+            return NotFound("File not found.");
+
+        if (entity.OwnerId != ownerId)
+            return Forbid("You do not have permission to delete this file.");
+
+        var response = await _httpClient.DeleteAsync($"http://storage-node:5000/store/{fileName}");
         if (!response.IsSuccessStatusCode)
             return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
-        var entity = await db.Files.FirstOrDefaultAsync(f => f.FileName == fileName);
-        if (entity != null)
-        {
-            db.Files.Remove(entity);
-            await db.SaveChangesAsync();
-        }
+        db.Files.Remove(entity);
+        await db.SaveChangesAsync();
 
         return Ok(await response.Content.ReadAsStringAsync());
     }
@@ -90,7 +97,12 @@ public class FilesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> List([FromServices] FileDbContext db)
     {
-        var files = await db.Files.ToListAsync();
+        var ownerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var files = await db.Files
+            .Where(f => f.OwnerId == ownerId)
+            .ToListAsync();
+
         return Ok(files);
     }
 }
