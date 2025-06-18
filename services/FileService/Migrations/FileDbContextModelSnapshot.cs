@@ -36,6 +36,9 @@ namespace FileService.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("text");

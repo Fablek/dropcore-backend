@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FileService.Migrations
 {
     [DbContext(typeof(FileDbContext))]
-    [Migration("20250617180201_Init")]
+    [Migration("20250618173650_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -38,6 +38,9 @@ namespace FileService.Migrations
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("OwnerId")
                         .IsRequired()

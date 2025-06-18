@@ -19,6 +19,7 @@ namespace FileService.Migrations
                     FileName = table.Column<string>(type: "text", nullable: false),
                     StorageFileName = table.Column<string>(type: "text", nullable: false),
                     ContentType = table.Column<string>(type: "text", nullable: false),
+                    FileSize = table.Column<long>(type: "bigint", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: false),
                     UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

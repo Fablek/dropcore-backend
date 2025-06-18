@@ -82,10 +82,10 @@ services:
       dockerfile: Dockerfile.tools
     working_dir: /src
     depends_on:
-      - postgres
+      - file-postgres
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=fileservice
+      - ConnectionStrings__DefaultConnection=Host=file-postgres;Port=5432;Username=postgres;Password=postgres;Database=fileservice
     command: ["--help"]
 
   storage-node:
@@ -98,7 +98,42 @@ services:
     volumes:
       - ./storage:/app/Storage
 
+  user-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: userservice
+    ports:
+      - "5434:5432"
+    volumes:
+      - user_pgdata:/var/lib/postgresql/data
+
+  user-service:
+    build:
+      context: ./services/UserService
+    ports:
+      - "5004:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - ConnectionStrings__DefaultConnection=Host=user-postgres;Port=5432;Username=postgres;Password=postgres;Database=userservice
+    depends_on:
+      - user-postgres
+
+  user-tools:
+    build:
+      context: ./services/UserService
+      dockerfile: Dockerfile.tools
+    working_dir: /src
+    depends_on:
+      - user-postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=user-postgres;Port=5432;Username=postgres;Password=postgres;Database=userservice
+    command: ["--help"]
+
 volumes:
   pgdata:
   pgadmin_data:
   file_pgdata:
+  user_pgdata:

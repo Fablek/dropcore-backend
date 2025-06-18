@@ -46,10 +46,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = "dropcore-auth", // z tokena
-            ValidAudience = "dropcore-users", // z tokena
+            ValidIssuer = "dropcore-auth",
+            ValidAudience = "dropcore-users",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("this_is_a_very_long_and_secure_jwt_key_123!")),
-            NameClaimType = "sub" // <<< To ustawia sub jako ClaimTypes.NameIdentifier
+            NameClaimType = "sub"
         };
     });
 
