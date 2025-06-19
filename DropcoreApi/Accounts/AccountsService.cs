@@ -1,8 +1,3 @@
-using DropcoreApi.Core.Auth;
-using DropcoreApi.Core.Exceptions;
-using DropcoreApi.Core.Models;
-using DropcoreApi.Core.Types;
-
 public class AccountsService(IAccountsRepository accountsRepository, IPasswordHasher passwordHasher)
 {
     public async Task<Account> Register(Username username, Password password)

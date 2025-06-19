@@ -1,6 +1,3 @@
-using DropcoreApi.Core.Auth;
-using DropcoreApi.Core.Models;
-using DropcoreApi.Core.Types;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -13,8 +10,6 @@ public class JwtTokenWriter : IAuthTokenWriter
     public AuthToken GenerateAuthToken(Account account)
     {
         var token = new JwtSecurityToken(
-            issuer: "localhost", 
-            audience: "localhost", 
             notBefore: DateTime.UtcNow, 
             expires: DateTime.UtcNow.AddDays(1), 
             signingCredentials: new SigningCredentials(

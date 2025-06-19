@@ -1,8 +1,3 @@
-using DropcoreApi.Core.Auth;
-using DropcoreApi.Core.Exceptions;
-using DropcoreApi.Core.Models;
-using DropcoreApi.Core.Types;
-
 public class AuthService(IAccountsRepository accountsRepository, IPasswordHasher passwordHasher, IAuthTokenWriter authTokenWriter)
 {
     public async Task<AuthToken> Authenticate(Username username, Password password)

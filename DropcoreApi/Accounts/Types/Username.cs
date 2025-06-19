@@ -1,6 +1,4 @@
-﻿namespace DropcoreApi.Core.Types;
-
-public record Username(string Value)
+﻿public record Username(string Value)
 {
     public static implicit operator Username(string username)
     {

@@ -1,5 +1,3 @@
-using DropcoreApi.Core.Auth;
-using DropcoreApi.Core.Types;
 using System.Security.Cryptography;
 using System.Text;
 

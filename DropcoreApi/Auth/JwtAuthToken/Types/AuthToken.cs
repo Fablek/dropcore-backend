@@ -1,6 +1,4 @@
-﻿namespace DropcoreApi.Core.Types;
-
-public record AuthToken(string Token)
+﻿public record AuthToken(string Token)
 {
     public static implicit operator AuthToken(string token)
     {
