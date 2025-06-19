@@ -93,7 +93,8 @@ public class FilesController : ControllerBase
             return StatusCode((int)response.StatusCode);
 
         var stream = await response.Content.ReadAsStreamAsync();
-        return File(stream, file.ContentType, file.FileName);
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        return File(stream, contentType, file.FileName);
     }
 
     [HttpDelete("{id:guid}")]

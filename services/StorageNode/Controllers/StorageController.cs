@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace StorageNode.Controllers;
 
@@ -35,7 +36,19 @@ public class StorageController : ControllerBase
             return NotFound("File not found.");
 
         var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-        return File(fileStream, "application/octet-stream", fileName);
+
+        var contentType = GetContentType(fileName);
+        return File(fileStream, contentType, fileName);
+    }
+
+    private string GetContentType(string fileName)
+    {
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(fileName, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+        return contentType;
     }
 
     [HttpDelete("{fileName}")]
