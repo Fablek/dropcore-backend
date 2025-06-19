@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using System.Net.Http;
 
 namespace AuthService.Controllers;
 
@@ -19,6 +20,7 @@ public class AuthController : ControllerBase
 {
     private readonly AuthDbContext _context;
     private readonly IConfiguration _config;
+    private readonly HttpClient _httpClient = new HttpClient();
 
     public AuthController(AuthDbContext context, IConfiguration config)
     {
@@ -41,6 +43,19 @@ public class AuthController : ControllerBase
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
+        var createUserPayload = new
+        {
+            email = dto.Email
+        };
+
+        var json = JsonContent.Create(createUserPayload);
+        var response = await _httpClient.PostAsync("http://user-service:5000/users", json);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return StatusCode(500, "Failed to sync with UserService.");
+        }
 
         return Ok("User registered.");
     }

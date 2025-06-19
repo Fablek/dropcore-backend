@@ -1,0 +1,6 @@
+@StorageNode_HostAddress = http://localhost:5249
+
+GET {{StorageNode_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
