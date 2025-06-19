@@ -14,12 +14,12 @@ public class AccountsMongoRepository(IMongoDatabase db) : IAccountsRepository
         await _usersCollection.InsertOneAsync(AccountMongoEntity.FromModel(entity));
     }
 
-    public async Task Delete(DropcoreApi.Core.Types.UniqueId id)
+    public async Task Delete(UniqueId id)
     {
         await _usersCollection.DeleteOneAsync(a => a.UniqueId == id.Guid);
     }
 
-    public async Task<Account?> GetByUniqueId(DropcoreApi.Core.Types.UniqueId id)
+    public async Task<Account?> GetByUniqueId(UniqueId id)
     {
         var account = await _usersCollection.Find(a => a.UniqueId == id.Guid).SingleOrDefaultAsync();
 

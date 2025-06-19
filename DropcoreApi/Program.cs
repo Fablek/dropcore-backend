@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,39 +11,40 @@ builder.Services.AddCors(config =>
     {
         policy.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod();
     });
-
-    config.DefaultPolicyName = "default";
 });
 
-builder.Services
-    .AddEndpointsApiExplorer()
-    .AddSwaggerGen(options =>
-    {
-        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services
+        .AddEndpointsApiExplorer()
+        .AddSwaggerGen(options =>
         {
-            Name = "Authorization",
-            In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http,
-            Scheme = JwtBearerDefaults.AuthenticationScheme,
-        });
-
-        options.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
+            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme()
             {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
-        });
-    });
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+            });
 
-builder.Services.AddScoped(_ => new MongoClient("mongodb://localhost:27017").GetDatabase("dropcore"));
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = JwtBearerDefaults.AuthenticationScheme,
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
+}
+
+builder.Services.AddScoped(_ => new MongoClient(SettingsHelper.GetMongoDbConnectionString()).GetDatabase(SettingsHelper.GetMongoDbName()));
 
 builder.Services
     .AddAuthorization()
@@ -55,7 +55,7 @@ builder.Services
         config.DefaultChallengeScheme =
             JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddJwtBearer("Bearer", config =>
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, config =>
     {
         config.TokenValidationParameters = new TokenValidationParameters()
         {
@@ -64,7 +64,7 @@ builder.Services
 
             ValidateLifetime = true,
 
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("my secret for jwt token 123456 long long long long long"))
+            IssuerSigningKey = new SymmetricSecurityKey(SettingsHelper.GetAuthTokenKey().Bytes)
         };
 
         config.Validate();
@@ -75,7 +75,7 @@ builder.Services
     .AddScoped<AccountsService>()
     .AddScoped<IAccountsRepository, AccountsMongoRepository>()
     .AddSingleton<IPasswordHasher, ShaPasswordHasher>()
-    .AddSingleton(new ShaPasswordHashConfig(Secret.FromUtf8String("secret"), Secret.FromUtf8String("secret")))
+    .AddSingleton(new ShaPasswordHashConfig(SettingsHelper.GetPasswordHashSalt(), SettingsHelper.GetPasswordHashPeper()))
     .AddSingleton<IAuthTokenWriter, JwtTokenWriter>();
 
 var app = builder.Build();
@@ -98,3 +98,22 @@ app.MapPost("/register", AccountsEndpoints.Register).AllowAnonymous().RequireCor
 app.MapPost("/login", AccountsEndpoints.Login).AllowAnonymous().RequireCors();
 
 app.Run();
+
+public static class SettingsHelper
+{
+    public static Secret GetPasswordHashSalt() => Secret.FromUtf8String(GetProperty("DP_PWD_HASH_SALT"));
+    public static Secret GetPasswordHashPeper() => Secret.FromUtf8String(GetProperty("DP_PWD_HASH_PEPER"));
+    public static Secret GetAuthTokenKey() => Secret.FromUtf8String(GetProperty("DP_AUTH_TOKEN_KEY"));
+    public static string GetMongoDbConnectionString() => GetProperty("DP_MONGODB_CONNECTION_STRING");
+    public static string GetMongoDbName() => GetProperty("DP_MONGODB_DB_NAME");
+
+    static string GetProperty(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new Exception($"Not set env variable '{name}'");
+
+        return value;
+    }
+}

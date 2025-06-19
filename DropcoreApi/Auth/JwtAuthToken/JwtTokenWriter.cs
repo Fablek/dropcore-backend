@@ -1,7 +1,6 @@
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 public class JwtTokenWriter : IAuthTokenWriter
 {
@@ -13,7 +12,7 @@ public class JwtTokenWriter : IAuthTokenWriter
             notBefore: DateTime.UtcNow, 
             expires: DateTime.UtcNow.AddDays(1), 
             signingCredentials: new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes("my secret for jwt token 123456 long long long long long")),
+                new SymmetricSecurityKey(SettingsHelper.GetAuthTokenKey().Bytes),
                 SecurityAlgorithms.HmacSha256
             ),
             claims: [

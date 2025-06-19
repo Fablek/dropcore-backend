@@ -6,7 +6,7 @@ public class AccountsService(IAccountsRepository accountsRepository, IPasswordHa
             throw new AppException("Can not register account - account with this same username already exist");
 
         return await accountsRepository.CreateAndReturn(new Account(
-            UniqueId: DropcoreApi.Core.Types.UniqueId.CreateNew(),
+            UniqueId: UniqueId.CreateNew(),
             Username: username,
             PasswordHash: passwordHasher.Hash(password)
         ));

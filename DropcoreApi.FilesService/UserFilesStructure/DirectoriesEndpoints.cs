@@ -38,7 +38,7 @@ public static class DirectoriesEndpoints
     {
         public static DirectoryInfoResponseDto FromDirectoryInfo(DirectoryInfo directoryInfo)
         {
-            var relativePath = directoryInfo.FullName.Substring(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "dropcore-files").Length + 37);
+            var relativePath = directoryInfo.FullName.Substring(SettingsHelper.GetRootDirectory().FullName.Length + 37);
 
             return new DirectoryInfoResponseDto(
                 Name: directoryInfo.Name,
@@ -56,7 +56,7 @@ public static class DirectoriesEndpoints
     {
         public static ShortDirectoryInfoResponseDto FromDirectoryInfo(DirectoryInfo directoryInfo)
         {
-            var relativePath = directoryInfo.FullName.Substring(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "dropcore-files").Length + 37);
+            var relativePath = directoryInfo.FullName.Substring(SettingsHelper.GetRootDirectory().FullName.Length + 37);
 
             return new ShortDirectoryInfoResponseDto(
                 Name: directoryInfo.Name,
@@ -65,10 +65,12 @@ public static class DirectoriesEndpoints
         }
     }
 
-
     public static IResult GetDirectory(ClaimsPrincipal claimsPrincipal, [FromQuery] string? path, UserFilesStructureService userFilesStructureService)
     {
         var directory = userFilesStructureService.GetUserDirectory(claimsPrincipal.GetUserUniqueId(), path);
+
+        if (!directory.Exists && (string.IsNullOrEmpty(path) || path == "/" || path == "\\"))
+            directory.Create();
 
         if (directory.Exists)
             return Results.Ok(DirectoryInfoResponseDto.FromDirectoryInfo(directory));

@@ -42,15 +42,15 @@ public static class FilesEndpoints
     {
         public static FileInfoResponseDto FromFileInfo(FileInfo fileInfo)
         {
-            var relativePath = fileInfo.FullName.Substring(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "dropcore-files").Length + 37);
+            var relativePath = fileInfo.FullName.Substring(SettingsHelper.GetRootDirectory().FullName.Length + 37);
 
             return new FileInfoResponseDto(
                 Name: fileInfo.Name,
                 Extension: fileInfo.Extension,
                 Path: relativePath,
                 SizeInBytes: fileInfo.Length,
-                UploadLink: $"https://localhost:443/file/upload/byform?parentPath={relativePath}",
-                DownloadLink: $"https://localhost:443/file/download?parentPath={relativePath}"
+                UploadLink: $"{SettingsHelper.GetBaseUrl()}/file/upload/byform?parentPath={relativePath}",
+                DownloadLink: $"{SettingsHelper.GetBaseUrl()}/file/download?parentPath={relativePath}"
             );
         }
     }

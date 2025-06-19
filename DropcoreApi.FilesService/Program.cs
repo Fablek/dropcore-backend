@@ -1,12 +1,9 @@
+using DropcoreApi.Core.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors(config =>
 {
@@ -16,31 +13,36 @@ builder.Services.AddCors(config =>
     });
 });
 
-builder.Services.AddSwaggerGen(options =>
+if (builder.Environment.IsDevelopment())
 {
-    options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme()
-    {
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = JwtBearerDefaults.AuthenticationScheme,
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+    builder.Services
+        .AddEndpointsApiExplorer()
+        .AddSwaggerGen(options =>
         {
-            new OpenApiSecurityScheme
+            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme()
             {
-                Reference = new OpenApiReference
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = JwtBearerDefaults.AuthenticationScheme,
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = JwtBearerDefaults.AuthenticationScheme,
+                        }
+                    },
+                    Array.Empty<string>()
                 }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
+            });
+        });
+}
 
 builder.Services
     .AddAuthorization()
@@ -59,7 +61,7 @@ builder.Services
             ValidateIssuer = false,
             ValidateLifetime = true,
 
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("my secret for jwt token 123456 long long long long long"))
+            IssuerSigningKey = new SymmetricSecurityKey(SettingsHelper.GetAuthTokenSecret().Bytes)
         };
 
         config.Validate();
@@ -68,7 +70,7 @@ builder.Services
 builder.Services
     .AddSingleton<UserFilesStructureService>()
     .AddSingleton(new FilesConfig(
-        RootDirectory: new DirectoryInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "dropcore-files"))
+        RootDirectory: SettingsHelper.GetRootDirectory()
     )
 );
 
@@ -98,3 +100,20 @@ app.MapPost("/file/upload/byform", FilesEndpoints.UploadFileByForm).RequireAutho
 app.MapPost("/file/upload", FilesEndpoints.UploadFile).RequireAuthorization().RequireCors();
 
 app.Run();
+
+public static class SettingsHelper
+{
+    public static string GetBaseUrl() => GetProperty("DP_BASE_URL");
+    public static Secret GetAuthTokenSecret() => Secret.FromUtf8String(GetProperty("DP_AUTH_TOKEN_KEY"));
+    public static DirectoryInfo GetRootDirectory() => new(GetProperty("DP_ROOT_DIR"));
+
+    static string GetProperty(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new Exception($"Not set env variable '{name}'");
+
+        return value;
+    }
+}
